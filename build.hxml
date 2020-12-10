@@ -1,0 +1,11 @@
+-js tdo.js
+-main tdo.Task
+-cp src
+-lib hxargs
+-lib hxnodejs
+-lib om.term
+-debug
+-dce full
+-D source-header=
+--macro includeFile('shebang_header')
+-cmd chmod +x tdo.js
