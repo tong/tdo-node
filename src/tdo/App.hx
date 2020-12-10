@@ -75,8 +75,8 @@ class App {
 			
 			argHandler.parse( args );
 			usage = argHandler.getDoc();
-			if( args.length == 0 ) {
-				_context = Path.directory( Sys.getCwd() ).withoutDirectory();
+			if( _context == null ) {
+				_context = Sys.getCwd().withoutDirectory();
 			} else {
 				if( _context == null && _message == null ) {
 					_context = args[0];
