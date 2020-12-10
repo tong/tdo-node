@@ -6,6 +6,7 @@
 -lib om.term
 -debug
 -dce full
+-D js-es=6
 -D source-header=
 --macro includeFile('shebang_header')
 -cmd chmod +x tdo.js
