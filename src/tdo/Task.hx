@@ -6,6 +6,7 @@ import js.Node.process;
 import js.node.readline.Interface;
 import js.node.Readline;
 import om.Term;
+import om.ansi.EscapeSequence.CSI;
 import om.ansi.Color;
 import om.ansi.BackgroundColor;
 import om.ansi.SGR;
@@ -152,11 +153,11 @@ class Task {
 
 	static function print( str : String, ?ansi_codes : Array<Int> ) {
 		if( ansi_codes == null ) Sys.print( str ) else {
-			var s = '\x1b[';
+			var s : String = CSI;
 			if( ansi_codes != null ) s += ansi_codes.join(';');
 			s += 'm';
 			s += str;
-			s += '\x1b[0m';
+			s += CSI;
 			Sys.print(s);
 		}
 	}
