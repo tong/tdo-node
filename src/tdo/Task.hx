@@ -1,10 +1,16 @@
 package tdo;
 
+import haxe.Timer;
+import js.Node.console;
+import js.Node.process;
+import js.node.readline.Interface;
+import js.node.Readline;
 import om.Term;
 import om.ansi.Color;
 import om.ansi.BackgroundColor;
 import om.ansi.SGR;
 
+using StringTools;
 using haxe.io.Path;
 
 typedef Style = {
@@ -39,6 +45,8 @@ class Task {
 		},
 	};
 
+	static var readline : Interface;
+
 	public var context : String;
 	public var message : String;
 	//public var timeEstimated = 0.0;
@@ -49,30 +57,29 @@ class Task {
 	public var timeStartStr(default,null) : String;
 	public var elapsedStr(default,null) : String;
 
-	public function new() {
-	}
+	var timer : Timer;
 
-	public function start( interval = 1.0 ) {
+	public function new() {}
+
+	public function start( interval = 1000 ) {
 		running = true;
 		timeStart = Date.now();
 		timeStartStr =  DateTools.format( timeStart, "%H:%M" );
-		var metaCodes = THEME.meta.style.concat( [THEME.meta.color,THEME.meta.background] );
-		while( running ) {
+		update();
+		printUpdate();
+		timer = new Timer( Std.int( interval ) );
+		timer.run = () -> {
 			update();
-			printLine( '\r $timeStartStr ', metaCodes );
-			if( context != null ) printLine( ' '+context.toUpperCase()+' ', [1,THEME.context.color,THEME.context.background] );
-			if( message != null ) printLine( ' $message ', [THEME.message.color,THEME.message.background] );
-			printLine( ' $elapsedStr ', metaCodes );
-			Sys.sleep( interval );
+			printUpdate();
 		}
 	}
 
 	public function update() {
 		var now = Date.now();
-		var elapsed = (now.getTime() - timeStart.getTime()) / 1000;
+		var elapsed = Std.int( (now.getTime() - timeStart.getTime()) / 1000 );
 		elapsedStr = '';
 		if( elapsed <= 60 ) {
-			elapsedStr = elapsed+'secs';
+			elapsedStr = elapsed+'s';
 		} else if( elapsed <= 3600 ) {
 			elapsedStr = Std.int( elapsed/60)+'mins';
 		} else {
@@ -81,6 +88,14 @@ class Task {
 			var mins = minsTotal % 60;
 			elapsedStr = formatTimePart(hours)+":"+formatTimePart(mins);
 		}
+	}
+
+	public function printUpdate() {
+		var metaCodes = THEME.meta.style.concat( [THEME.meta.color,THEME.meta.background] );
+		print( '\r $timeStartStr ', metaCodes );
+		if( context != null ) print( ' '+context.toUpperCase()+' ', [1,THEME.context.color,THEME.context.background] );
+		if( message != null ) print( ' $message ', [THEME.message.color,THEME.message.background] );
+		print( ' $elapsedStr ', metaCodes );
 	}
 
 	static function main() {
@@ -104,6 +119,27 @@ class Task {
 				task.message = args[1];
 			}
 		}
+	
+		readline = Readline.createInterface({
+			input: process.stdin,
+			  output: process.stdout,
+			  prompt: ' > '
+		});
+		readline.on('line', (line:String) -> {
+			line = line.trim();
+			console.log( 'Received: ${line}' );
+			switch line {
+			case 'pause':
+				trace("TODO pause task");
+			case _:
+				trace('Unknown command');
+			}
+			readline.prompt();
+		}).on( 'close', () -> {
+			console.log('Well done!');
+			process.exit(0);
+		});
+
 		Term.clear();
 		task.start();
 	}
@@ -114,7 +150,7 @@ class Task {
 		return str;
 	}
 
-	static function printLine( str : String, ?ansi_codes : Array<Int> ) {
+	static function print( str : String, ?ansi_codes : Array<Int> ) {
 		if( ansi_codes == null ) Sys.print( str ) else {
 			var s = '\x1b[';
 			if( ansi_codes != null ) s += ansi_codes.join(';');
