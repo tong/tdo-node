@@ -1,5 +1,5 @@
 -js tdo.js
--main tdo.Task
+-main tdo.App
 -cp src
 -lib hxargs
 -lib hxnodejs

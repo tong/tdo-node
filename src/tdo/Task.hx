@@ -14,21 +14,9 @@ import om.ansi.SGR;
 using StringTools;
 using haxe.io.Path;
 
-typedef Style = {
-	var color : om.ansi.Color;
-	var background : om.ansi.BackgroundColor;
-	var style : Array<Int>;
-}
-
-typedef Theme = {
-	context : Style,
-	message : Style,
-	meta : Style,
-}
-
 class Task {
 
-	public static var THEME : Theme = {
+	public static var THEME : tdo.App.Theme = {
 		context : {
 			color: Color.black,
 			background: BackgroundColor.blue,
@@ -60,7 +48,10 @@ class Task {
 
 	var timer : Timer;
 
-	public function new() {}
+	public function new( context : String, message : String ) {
+		this.context = context;
+		this.message = message;
+	}
 
 	public function start( interval = 1000 ) {
 		running = true;
@@ -87,83 +78,15 @@ class Task {
 			var minsTotal = Std.int( elapsed / 60 );
 			var hours = Std.int( minsTotal / 60 );
 			var mins = minsTotal % 60;
-			elapsedStr = formatTimePart(hours)+":"+formatTimePart(mins);
+			elapsedStr = App.formatTimePart(hours)+":"+App.formatTimePart(mins);
 		}
 	}
 
 	public function printUpdate() {
 		var metaCodes = THEME.meta.style.concat( [THEME.meta.color,THEME.meta.background] );
-		print( '\r $timeStartStr ', metaCodes );
-		if( context != null ) print( ' '+context.toUpperCase()+' ', [1,THEME.context.color,THEME.context.background] );
-		if( message != null ) print( ' $message ', [THEME.message.color,THEME.message.background] );
-		print( ' $elapsedStr ', metaCodes );
-	}
-
-	static function main() {
-		var task = new Task();
-		var usage : String = null;
-		var argHandler = hxargs.Args.generate([
-			@doc("Context")["-c"] => (context:String) -> task.context = context,
-			@doc("Message")["-m"] => (message:String) -> task.message = message,
-			//@doc("Estimated time")["-t"] => (hours:Float) -> timeEstimated = hours,
-			["--help","-help","-h"] => () -> exit( 0, usage ),
-			//_ => (arg:String) -> exit( 1, 'Unknown argument [$arg]' )
-		]);
-		var args = Sys.args();
-		argHandler.parse( args );
-		usage = argHandler.getDoc();
-		if( args.length == 0 ) {
-			task.context = Path.directory( Sys.getCwd() ).withoutDirectory();
-		} else {
-			if( task.context == null && task.message == null ) {
-				task.context = args[0];
-				task.message = args[1];
-			}
-		}
-	
-		readline = Readline.createInterface({
-			input: process.stdin,
-			  output: process.stdout,
-			  prompt: ' > '
-		});
-		readline.on('line', (line:String) -> {
-			line = line.trim();
-			console.log( 'Received: ${line}' );
-			switch line {
-			case 'pause':
-				trace("TODO pause task");
-			case _:
-				trace('Unknown command');
-			}
-			readline.prompt();
-		}).on( 'close', () -> {
-			console.log('Well done!');
-			process.exit(0);
-		});
-
-		Term.clear();
-		task.start();
-	}
-
-	static function formatTimePart( v : Int ) : String {
-		var str = '$v';
-		if( v < 10 ) str = '0$str';
-		return str;
-	}
-
-	static function print( str : String, ?ansi_codes : Array<Int> ) {
-		if( ansi_codes == null ) Sys.print( str ) else {
-			var s : String = CSI;
-			if( ansi_codes != null ) s += ansi_codes.join(';');
-			s += 'm';
-			s += str;
-			s += CSI;
-			Sys.print(s);
-		}
-	}
-
-	static function exit( code = 0, ?info : String ) {
-		if( info != null ) Sys.println( info );
-		Sys.exit( code );
+		App.print( '\r $timeStartStr ', metaCodes );
+		if( context != null ) App.print( ' '+context.toUpperCase()+' ', [1,THEME.context.color,THEME.context.background] );
+		if( message != null ) App.print( ' $message ', [THEME.message.color,THEME.message.background] );
+		App.print( ' $elapsedStr ', metaCodes );
 	}
 }
