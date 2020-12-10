@@ -8,9 +8,11 @@ typedef Entry = {
 
 class Log {
 
+    public static inline var DEFAULT_PATH = '/home/tong/dev/tool/tdo-node/tdo.log';
+
     public final path : String;
     
-    public var data : Dynamic;
+    public var data : Array<Dynamic>;
 
     function new( path : String, data : Array<Entry> ) {
         this.path = path;

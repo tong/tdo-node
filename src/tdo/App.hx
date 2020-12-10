@@ -47,13 +47,21 @@ class App {
 
 	static function main() {
 
-		var logFile = '/home/tong/dev/tool/tdo-node/tdo.log';
+		var logFile = Log.DEFAULT_PATH;
 
 		Log.init( logFile ).then( log -> {
 			
 			App.log = log;
 
-			//var task = new Task();
+			var args = Sys.args();
+			switch args[0] {
+			case 'history':
+				for( entry in log.data ) {
+					Sys.println( entry.timeStart+' '+entry.context+' '+entry.message );
+				}
+				exit();
+			}
+
 			var _context : String = null;
 			var _message : String = null;
 			var usage : String = null;
@@ -64,7 +72,7 @@ class App {
 				["--help","-help","-h"] => () -> exit( 0, usage ),
 				//_ => (arg:String) -> exit( 1, 'Unknown argument [$arg]' )
 			]);
-			var args = Sys.args();
+			
 			argHandler.parse( args );
 			usage = argHandler.getDoc();
 			if( args.length == 0 ) {
