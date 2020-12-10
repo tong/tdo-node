@@ -1,6 +1,5 @@
 package tdo;
 
-import js.node.Os;
 import js.node.readline.Interface;
 import js.node.Readline;
 import om.Term;
@@ -8,18 +7,6 @@ import om.ansi.EscapeSequence.CSI;
 import om.ansi.Color;
 import om.ansi.BackgroundColor;
 import om.ansi.SGR;
-
-typedef Style = {
-	var color : om.ansi.Color;
-	var background : om.ansi.BackgroundColor;
-	var style : Array<Int>;
-}
-
-typedef Theme = {
-	context : Style,
-	message : Style,
-	meta : Style,
-}
 
 class App {
 
@@ -47,6 +34,7 @@ class App {
 
 	static function main() {
 
+		var userInfo = Os.userInfo();
 		var logFile = Log.DEFAULT_PATH;
 
 		Log.init( logFile ).then( log -> {
@@ -84,7 +72,7 @@ class App {
 				}
 			}
 
-			task = new Task( _context, _message );
+			task = new Task( userInfo.username, _context, _message );
 
 			function exitHandler(code:Int,options:Dynamic) {
 				if (code != null ) console.log(code);

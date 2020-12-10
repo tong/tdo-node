@@ -1,14 +1,15 @@
 package tdo;
 
 typedef Entry = {
+    user : String,
     context : String,
     message : String,
-    timeStart : Date,
+    time : Date,
 };
 
 class Log {
 
-    public static inline var DEFAULT_PATH = '/home/tong/dev/tool/tdo-node/tdo.log';
+    public static inline var DEFAULT_PATH = '/home/tong/dev/tool/tdo-node/log.json';
 
     public final path : String;
     
@@ -21,9 +22,11 @@ class Log {
 
     public function add( entry : Entry ) {
         data.push( {
+            user: entry.user,
             context: entry.context,
             message: entry.message,
-            timeStart : entry.timeStart
+            time : entry.time
+            //elapsed : entry.elapsed
         } );
     }
 
