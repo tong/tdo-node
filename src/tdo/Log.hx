@@ -13,7 +13,7 @@ class Log {
 
     public final path : String;
     
-    public var data : Array<Dynamic>;
+    public var data : Array<Entry>;
 
     function new( path : String, data : Array<Entry> ) {
         this.path = path;

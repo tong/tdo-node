@@ -45,7 +45,7 @@ class App {
 			switch args[0] {
 			case 'history':
 				for( entry in log.data ) {
-					Sys.println( entry.timeStart+' '+entry.context+' '+entry.message );
+					Sys.println( entry.user+": "+entry.time+' '+entry.context+' '+entry.message );
 				}
 				exit();
 			}
