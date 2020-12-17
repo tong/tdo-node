@@ -31,54 +31,82 @@ class App {
 	static var task : Task;
 	static var log : Log;
 	static var readline : Interface;
+	static var noColors = false;
+	//static var noClear = false;
 
 	static function main() {
 
-		var userInfo = Os.userInfo();
-		var logFile = Log.DEFAULT_PATH;
+		var userName : String;
+		var logPath : String = null;
+		var _context : String = null;
+		var _message : String = null;
+		var args = Sys.args();
+		var usage : String = null;
+		var argHandler = hxargs.Args.generate([
+			@doc("Context")["-c"] => (context:String) -> _context = context,
+			@doc("Description")["-d"] => (message:String) -> _message = message,
+			@doc("Set user")["-u"] => (name:String) -> userName = name,
+			//@doc("Estimated time")["-t"] => (hours:Float) -> timeEstimated = hours,
+			@doc("Path to log file")["--log-path"] => (path:String) -> logPath = path,
+			@doc("Disable colored output")["--no-colors"] => () -> noColors = true,
+			//@doc("Do not clear line")["--no-clear"] => () -> noClear = true,
+			["--help","-help","-h"] => () -> exit( 0, usage ),
+			_ => (arg:String) -> {
+				//cmd = arg;
+				//return;
+				//exit( 1, 'Unknown argument [$arg]' )
+			}
+		]);
+		usage = 'tdo <cmd> [params]\n'+argHandler.getDoc();
+		argHandler.parse( args );
 
-		Log.init( logFile ).then( log -> {
-			
-			App.log = log;
+		if( args.length == 0 ) {
+			exit( usage );
+		}
+		
+		if( userName == null ) userName = Os.userInfo().username;
+		if( logPath == null ) logPath = Log.DEFAULT_PATH;
 
-			var args = Sys.args();
-			switch args[0] {
-			case 'history':
+		function printLogEntry( entry : tdo.Log.Entry ) {
+			if( entry.user != null ) Sys.print( entry.user+' ' );
+			if( entry.time != null ) Sys.print( entry.time+' ' );
+			if( entry.context != null ) Sys.print( entry.context );
+			if( entry.message != null ) Sys.print( ': '+entry.message );
+			Sys.print( '\n' );
+		}
+
+		Log.init( logPath ).then( log -> {
+			var task : Task = null;
+			var cmd = args[0];
+			switch cmd {
+			case 'start':
+				if( _context == null && _message == null ) {
+					_context = args[1];
+					_message = args[2];
+				}
+				if( _context == null ) {
+					_context = Sys.getCwd().withoutDirectory();
+				}
+				task = new Task( userName, _context, _message );
+				task.clear = false;
+				task.start();
+			case 'now':
+				var entry = log.data[log.data.length-1];
+				printTask( entry.user, null, entry.context, entry.message );
+				exit();
+			case 'list':
 				for( entry in log.data ) {
-					Sys.println( entry.user+": "+entry.time+' '+entry.context+' '+entry.message );
+					printLogEntry( entry );
 				}
 				exit();
+			case _:
+				//exit( 1, 'Unknown argument [$cmd]' );
 			}
-
-			var _context : String = null;
-			var _message : String = null;
-			var usage : String = null;
-			var argHandler = hxargs.Args.generate([
-				@doc("Context")["-c"] => (context:String) -> _context = context,
-				@doc("Message")["-m"] => (message:String) -> _message = message,
-				//@doc("Estimated time")["-t"] => (hours:Float) -> timeEstimated = hours,
-				["--help","-help","-h"] => () -> exit( 0, usage ),
-				//_ => (arg:String) -> exit( 1, 'Unknown argument [$arg]' )
-			]);
-			
-			argHandler.parse( args );
-			usage = argHandler.getDoc();
-			if( _context == null ) {
-				_context = Sys.getCwd().withoutDirectory();
-			} else {
-				if( _context == null && _message == null ) {
-					_context = args[0];
-					_message = args[1];
-				}
-			}
-
-			task = new Task( userInfo.username, _context, _message );
 
 			function exitHandler(code:Int,options:Dynamic) {
 				if (code != null ) console.log(code);
 				if (options != null ) {
-					if (options.save) {
-						console.log('save');
+					if (options.save && task != null ) {
 						log.add( cast task );
 						log.save();
 					}
@@ -86,7 +114,13 @@ class App {
 				}
 			}
 			process.on( 'SIGINT', exitHandler.bind( Os.constants.signals.SIGINT, { exit: true, save: true } ) );
-			
+
+		}).catchError( function(e) {
+			//Sys.println( 'log file not found: '+e.path  );
+			trace(e);
+			exit( e.errno );
+		});
+
 			/* readline = Readline.createInterface({
 				input: process.stdin,
 				output: process.stdout,
@@ -106,10 +140,15 @@ class App {
 				console.log('Well done!');
 				process.exit(0);
 			}); */
+	}
 
-			Term.clear();
-			task.start();
-		});
+	static function printTask( user : String, time : Date, context : String, message : String, ?elapsed : String ) {
+		var theme = App.THEME;
+		var metaCodes = theme.meta.style.concat( [theme.meta.color,theme.meta.background] );
+		if( time != null ) App.print( '$time ', metaCodes );
+		if( context != null ) App.print( context.toUpperCase()+' ', [1,theme.context.color,theme.context.background] );
+		if( message != null ) App.print( ' $message ', [theme.message.color,theme.message.background] );
+		if( elapsed != null ) App.print( ' $elapsed ', metaCodes );
 	}
 
 	public static function formatTimePart( v : Int ) : String {
@@ -119,7 +158,7 @@ class App {
 	}
 
 	public static function print( str : String, ?ansi_codes : Array<Int> ) {
-		if( ansi_codes == null ) Sys.print( str ) else {
+		if( noColors || ansi_codes == null ) Sys.print( str ) else {
 			var s : String = CSI;
 			if( ansi_codes != null ) s += ansi_codes.join(';');
 			s += 'm';

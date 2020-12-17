@@ -21,6 +21,8 @@ class Task {
 	public var timeStartStr(default,null) : String;
 	public var elapsedStr(default,null) : String;
 	//public var timeEstimated = 0.0;
+	
+	public var clear = true;
 
 	var timer : Timer;
 
@@ -35,11 +37,11 @@ class Task {
 		time = Date.now();
 		timeStartStr =  DateTools.format( time, "%H:%M" );
 		update();
-		printUpdate();
+		print();
 		timer = new Timer( Std.int( interval ) );
 		timer.run = () -> {
 			update();
-			printUpdate();
+			print();
 		}
 	}
 
@@ -64,7 +66,7 @@ class Task {
 		}
 	}
 
-	public function printUpdate( clear = true ) {
+	public function print() {
 		if( clear ) om.Term.clear(); //Sys.print('\r');
 		var theme = App.THEME;
 		var metaCodes = theme.meta.style.concat( [theme.meta.color,theme.meta.background] );
