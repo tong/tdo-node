@@ -88,7 +88,7 @@ class App {
 					_context = Sys.getCwd().withoutDirectory();
 				}
 				task = new Task( userName, _context, _message );
-				task.clear = false;
+				task.clear = true;
 				task.start();
 			case 'now':
 				var entry = log.data[log.data.length-1];
